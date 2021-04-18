@@ -103,6 +103,7 @@ MIN_RAMP_TIME: constant(uint256) = 86400
 
 MATIC_REWARDS: constant(address) = 0x357D51124f59836DeD84c8a1730D72B749d8BC23
 AAVE_LENDING_POOL: constant(address) = 0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf
+WMATIC: constant(address) = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270
 
 coins: public(address[N_COINS])
 underlying_coins: public(address[N_COINS])
@@ -133,6 +134,8 @@ future_owner: public(address)
 is_killed: bool
 kill_deadline: uint256
 KILL_DEADLINE_DT: constant(uint256) = 2 * 30 * 86400
+
+reward_receiver: public(address)
 
 
 @external
@@ -363,22 +366,26 @@ def calc_token_amount(_amounts: uint256[N_COINS], is_deposit: bool) -> uint256:
 
 @internal
 def _claim_rewards():
-    response: Bytes[32] = raw_call(
-        0x357D51124f59836DeD84c8a1730D72B749d8BC23,
-        concat(
-            method_id("claimRewards(address[],uint256,address)"),
-            convert(32 * 3, bytes32),
-            convert(MAX_UINT256, bytes32),
-            convert(self, bytes32),
-            convert(3, bytes32),
-            convert(self.coins[0], bytes32),
-            convert(self.coins[1], bytes32),
-            convert(self.coins[2], bytes32),
-        ),
-        max_outsize=32
-    )
-    amount: uint256 = convert(response, uint256)
-    # if amount > 0:
+    # push wMatic rewards into the reward receiver
+    reward_receiver: address = self.reward_receiver
+    if reward_receiver != ZERO_ADDRESS:
+        response: Bytes[32] = raw_call(
+            MATIC_REWARDS,
+            concat(
+                method_id("claimRewards(address[],uint256,address)"),
+                convert(32 * 3, bytes32),
+                convert(MAX_UINT256, bytes32),
+                convert(self, bytes32),
+                convert(3, bytes32),
+                convert(self.coins[0], bytes32),
+                convert(self.coins[1], bytes32),
+                convert(self.coins[2], bytes32),
+            ),
+            max_outsize=32
+        )
+        amount: uint256 = convert(response, uint256)
+        if amount > 0:
+            assert ERC20(WMATIC).transfer(reward_receiver, amount)
 
 
 @external
@@ -691,7 +698,8 @@ def remove_liquidity(
     @param _use_underlying If True, withdraw underlying assets instead of aTokens
     @return List of amounts of coins that were withdrawn
     """
-    self._claim_rewards()
+    if not self.is_killed:
+        self._claim_rewards()
     amounts: uint256[N_COINS] = self._balances()
     lp_token: address = self.lp_token
     total_supply: uint256 = ERC20(lp_token).totalSupply()
@@ -1062,3 +1070,9 @@ def set_aave_referral(referral_code: uint256):
     assert msg.sender == self.owner  # dev: only owner
     assert referral_code < 2 ** 16  # dev: uint16 overflow
     self.aave_referral = referral_code
+
+
+@external
+def set_reward_receiver(_reward_receiver: address):
+    assert msg.sender == self.owner
+    self.reward_receiver = _reward_receiver
