@@ -24,7 +24,7 @@ Curve.fi exchange implementation for Polygon.
 3. Add Polygon to your local brownie networks:
 
     ```bash
-    brownie network import network-config.yaml
+    brownie networks import network-config.yaml
     ```
 
 ### Running the Tests

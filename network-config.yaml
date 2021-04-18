@@ -20,3 +20,8 @@ live:
       id: polygon-main
       host: https://rpc-mainnet.maticvigil.com/
       explorer: https://explorer.matic.network
+    - name: Mumbai Testnet
+      chainid: 80001
+      id: polygon-testnet
+      host: https://rpc-mumbai.maticvigil.com/
+      explorer: https://explorer-mumbai.maticvigil.com/
