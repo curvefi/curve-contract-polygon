@@ -136,7 +136,7 @@ kill_deadline: uint256
 KILL_DEADLINE_DT: constant(uint256) = 2 * 30 * 86400
 
 reward_receiver: public(address)
-
+admin_fee_receiver: public(address)
 
 @external
 def __init__(
@@ -171,6 +171,7 @@ def __init__(
     self.admin_fee = _admin_fee
     self.offpeg_fee_multiplier = _offpeg_fee_multiplier
     self.owner = msg.sender
+    self.admin_fee_receiver = msg.sender
     self.kill_deadline = block.timestamp + KILL_DEADLINE_DT
     self.lp_token = _pool_token
 
@@ -1038,7 +1039,7 @@ def withdraw_admin_fees():
     for i in range(N_COINS):
         value: uint256 = self.admin_balances[i]
         if value != 0:
-            assert ERC20(self.coins[i]).transfer(msg.sender, value)
+            assert ERC20(self.coins[i]).transfer(self.admin_fee_receiver, value)
             self.admin_balances[i] = 0
 
 
@@ -1076,3 +1077,9 @@ def set_aave_referral(referral_code: uint256):
 def set_reward_receiver(_reward_receiver: address):
     assert msg.sender == self.owner
     self.reward_receiver = _reward_receiver
+
+
+@external
+def set_admin_fee_receiver(_admin_fee_receiver: address):
+    assert msg.sender == self.owner
+    self.admin_fee_receiver = _admin_fee_receiver
