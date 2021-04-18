@@ -1,0 +1,44 @@
+{
+    "lp_contract": "CurveTokenV3",
+    "wrapped_interface": "AToken",
+    "lp_constructor": {
+        "symbol": "am3CRV",
+        "name": "Curve.fi amDAI/amUSDC/amUSDT"
+    },
+    "swap_constructor": {
+        "_A": 200,
+        "_fee": 4000000,
+        "_admin_fee": 5000000000,
+        "_offpeg_fee_multiplier": 20000000000,
+        "_aave_lending_pool": "0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf"
+    },
+    "coins": [
+        {
+            "name": "amDAI",
+            "decimals": 18,
+            "wrapped_decimals": 18,
+            "underlying_address": "0x8f3cf7ad23cd3cadbd9735aff958023239c6a063",
+            "wrapped_address": "0x27F8D03b3a2196956ED754baDc28D73be8830A6e",
+            "underlying_interface": "BridgeToken",
+            "wrapped_interface": "AToken"
+        },
+        {
+            "name": "amUSDC",
+            "decimals": 6,
+            "wrapped_decimals": 6,
+            "underlying_address": "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",
+            "wrapped_address": "0x1a13F4Ca1d028320A707D99520AbFefca3998b7F",
+            "underlying_interface": "BridgeToken",
+            "wrapped_interface": "AToken"
+        },
+        {
+            "name": "amUSDT",
+            "decimals": 6,
+            "wrapped_decimals": 6,
+            "underlying_address": "0xc2132d05d31c914a87c6611c10748aeb04b58e8f",
+            "wrapped_address": "0x60D55F02A771d515e077c9C2403a1ef324885CeC",
+            "underlying_interface": "BridgeToken",
+            "wrapped_interface": "AToken"
+        }
+    ]
+}
