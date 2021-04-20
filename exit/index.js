@@ -24,24 +24,22 @@ const burnTxHash =  process.argv[2];
     const exitCallData = await maticPOSClient
         .exitERC20(burnTxHash, { from: senderAddress, encodeAbi: true });
 
-    let gasPrice = await web3.eth.getGasPrice();
-    gasPrice = Number(gasPrice).toString(16);
-
-    senderPrivateKey = new Buffer.from(senderPrivateKey, 'hex');
+    const gasPrice = await web3.eth.getGasPrice();
     const txCount = await web3.eth.getTransactionCount(senderAddress);
     const rawTx = {
-        nonce: '0x0' + txCount,
-        gasPrice: '0x' + gasPrice,
-        gasLimit: '0x271000',
-        value: '0x00',
+        nonce: txCount,
+        gasPrice: gasPrice,
         to: rootChainManagerAddress,
         data: exitCallData.data,
     };
+    const gasLimit = await web3.eth.estimateGas(rawTx);
+    rawTx['gasLimit'] = gasLimit * 1.2;
+
     const tx = new Tx(rawTx, { 'chain': 'goerli' });
     tx.sign(senderPrivateKey);
     const serializedTx = tx.serialize();
 
-    web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'));
+    const txData = web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'));
 
-    console.log('Sent tx to the ethereum network');
+    console.log(txData.transactionHash);
 })(burnTxHash, rootChainManagerAddress, senderAddress, senderPrivateKey);
