@@ -7,7 +7,7 @@ const Tx = require('ethereumjs-tx').Transaction;
 const parentProvider = 'https://mainnet.infura.io/v3/' + process.env.INFURA_API_KEY;
 const maticProvider = 'https://rpc-mainnet.maticvigil.com/';
 const senderPrivateKey = process.env.PRIVATE_KEY;
-const rootChainManagerAddress = 0xBbD7cBFA79faee899Eaf900F13C9065bF03B1A74;
+const rootChainManagerAddress = 0xA0c68C638235ee32657e8f720a23ceC1bFc77C77;
 
 const web3 = new Web3(parentProvider);
 const maticPOSClient = new MaticPOSClient({
