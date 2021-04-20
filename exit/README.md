@@ -15,10 +15,8 @@
 2. Then create .env file with the following constants:
 
     ```bash
-    PARENT_PROVIDER = https://goerli.infura.io/v3/<API_KEY> # testnet
-    MATIC_PROVIDER = https://rpc-mumbai.matic.today # testnet
+    INFURA_API_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     PRIVATE_KEY = XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    ROOT_CHAIN_MANAGER = 0x0000000000000000000000000000000000000000
     ```
     
 

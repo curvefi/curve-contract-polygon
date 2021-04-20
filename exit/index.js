@@ -4,15 +4,15 @@ const MaticPOSClient = require('@maticnetwork/maticjs').MaticPOSClient;
 const Tx = require('ethereumjs-tx').Transaction;
 
 
-const parentProvider = process.env.PARENT_PROVIDER;
-const maticProvider = process.env.MATIC_PROVIDER;
+const parentProvider = 'https://mainnet.infura.io/v3/' + process.env.INFURA_API_KEY;
+const maticProvider = 'https://rpc-mainnet.maticvigil.com/';
 const senderPrivateKey = process.env.PRIVATE_KEY;
-const rootChainManagerAddress = process.env.ROOT_CHAIN_MANAGER;
+const rootChainManagerAddress = 0xBbD7cBFA79faee899Eaf900F13C9065bF03B1A74;
 
 const web3 = new Web3(parentProvider);
 const maticPOSClient = new MaticPOSClient({
-    network: "testnet",
-    version: "mumbai",
+    network: "mainnet",
+    version: "v1",
     parentProvider,
     maticProvider,
 });
@@ -35,7 +35,7 @@ const burnTxHash =  process.argv[2];
     const gasLimit = await web3.eth.estimateGas(rawTx);
     rawTx['gasLimit'] = gasLimit * 1.2;
 
-    const tx = new Tx(rawTx, { 'chain': 'goerli' });
+    const tx = new Tx(rawTx, { 'chain': 'mainnet' });
     tx.sign(senderPrivateKey);
     const serializedTx = tx.serialize();
 
