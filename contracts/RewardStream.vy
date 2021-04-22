@@ -10,6 +10,7 @@
 from vyper.interfaces import ERC20
 
 owner: public(address)
+future_owner: public(address)
 distributor: public(address)
 
 reward_token: public(address)
@@ -19,7 +20,6 @@ reward_duration: public(uint256)
 last_update_time: public(uint256)
 reward_per_receiver_total: public(uint256)
 receiver_count: public(uint256)
-
 
 reward_receivers: public(HashMap[address, bool])
 reward_paid: HashMap[address, uint256]
@@ -132,3 +132,35 @@ def set_reward_duration(_duration: uint256):
     assert msg.sender == self.owner  # dev: only owner
     assert block.timestamp > self.period_finish  # dev: reward period currently active
     self.reward_duration = _duration
+
+
+@external
+def set_reward_distributor(_distributor: address):
+    """
+    @notice Modify the reward distributor
+    @param _distributor Reward distributor
+    """
+    assert msg.sender == self.owner  # dev: only owner
+    self.distributor = _distributor
+
+
+@external
+def commit_transfer_ownership(_owner: address):
+    """
+    @notice Initiate ownership tansfer of the contract
+    @param _owner Address to have ownership transferred to
+    """
+    assert msg.sender == self.owner
+
+    self.future_owner = _owner
+
+
+@external
+def accept_transfer_ownership():
+    """
+    @notice Accept a pending ownership transfer
+    """
+    owner: address = self.future_owner
+    assert msg.sender == owner
+
+    self.owner = owner
