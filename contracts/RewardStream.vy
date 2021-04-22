@@ -150,7 +150,7 @@ def commit_transfer_ownership(_owner: address):
     @notice Initiate ownership tansfer of the contract
     @param _owner Address to have ownership transferred to
     """
-    assert msg.sender == self.owner
+    assert msg.sender == self.owner  # dev: only owner
 
     self.future_owner = _owner
 
@@ -161,6 +161,6 @@ def accept_transfer_ownership():
     @notice Accept a pending ownership transfer
     """
     owner: address = self.future_owner
-    assert msg.sender == owner
+    assert msg.sender == owner  # dev: only new owner
 
     self.owner = owner
