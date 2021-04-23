@@ -36,7 +36,7 @@ def underlying_coins(alice, project, pool_data):
             coins.append(
                 _MintableTestToken(
                     data.get("underlying_address", data.get("wrapped_address")),
-                    data.get("underlying_interface", data.get("wrapped_interface"))
+                    data.get("underlying_interface", data.get("wrapped_interface")),
                 )
             )
 
