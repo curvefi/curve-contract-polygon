@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        type: [unitary]
+        type: [unitary, integration]
 
     steps:
       - uses: actions/checkout@v2

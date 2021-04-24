@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        type: [unitary]
+        type: [unitary, integration]
 
     steps:
       - uses: actions/checkout@v2
@@ -52,4 +52,4 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run Tests
-        run: brownie test tests/${{ matrix.type }} --network development
+        run: brownie test tests/${{ matrix.type }} --network development --pool ${{ env.pool }}
