@@ -42,7 +42,11 @@ def approve_bob(bob, swap, underlying_coins, wrapped_coins):
 @pytest.fixture(scope="module")
 def mint_alice(alice, underlying_coins, wrapped_coins, initial_amounts, initial_amounts_underlying):
     _mint(
-        alice, wrapped_coins, initial_amounts, underlying_coins, initial_amounts_underlying,
+        alice,
+        wrapped_coins,
+        initial_amounts,
+        underlying_coins,
+        initial_amounts_underlying,
     )
 
 
