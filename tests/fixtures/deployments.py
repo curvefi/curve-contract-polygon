@@ -3,7 +3,12 @@ import pytest
 
 @pytest.fixture(scope="module")
 def swap(
-    project, alice, underlying_coins, wrapped_coins, pool_token, pool_data,
+    project,
+    alice,
+    underlying_coins,
+    wrapped_coins,
+    pool_token,
+    pool_data,
 ):
     deployer = getattr(project, pool_data["swap_contract"])
 
