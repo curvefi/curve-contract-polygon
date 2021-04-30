@@ -6,3 +6,4 @@ reports/
 venv/
 .venv/
 .idea
+*-*.json
