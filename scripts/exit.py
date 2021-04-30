@@ -139,19 +139,19 @@ class MerkleTree:
 
 
 @hot_swap_network("polygon-main")
-def fetch_burn_tx_data():
+def fetch_burn_tx_data(burn_tx_id: str = MATIC_BURN_TX_ID):
     """Fetch burn tx data."""
-    tx = web3.eth.get_transaction(MATIC_BURN_TX_ID)
-    tx_receipt = web3.eth.get_transaction_receipt(MATIC_BURN_TX_ID)
+    tx = web3.eth.get_transaction(burn_tx_id)
+    tx_receipt = web3.eth.get_transaction_receipt(burn_tx_id)
     tx_block = web3.eth.get_block(tx["blockNumber"])
 
     return tx, tx_receipt, tx_block
 
 
 @hot_swap_network("mainnet")
-def is_burn_checkpointed() -> bool:
+def is_burn_checkpointed(burn_tx_id: str = MATIC_BURN_TX_ID) -> bool:
     """Check a burn tx has been checkpointed on Ethereum mainnet."""
-    _, _, burn_tx_block = fetch_burn_tx_data()
+    _, _, burn_tx_block = fetch_burn_tx_data(burn_tx_id)
     deployment_addrs = fetch_deployment_data()["Main"]["Contracts"]
     root_chain_proxy_addr, root_chain_addr = (
         deployment_addrs["RootChainProxy"],
@@ -337,11 +337,11 @@ def encode_payload(
     return rlp.encode(payload)
 
 
-def build_calldata() -> bytes:
+def build_calldata(burn_tx_id: str = MATIC_BURN_TX_ID) -> bytes:
     """Generate the calldata required for withdrawing ERC20 asset on Ethereum."""
     assert is_burn_checkpointed()
 
-    burn_tx, burn_tx_receipt, burn_tx_block = fetch_burn_tx_data()
+    burn_tx, burn_tx_receipt, burn_tx_block = fetch_burn_tx_data(burn_tx_id)
     start, end, header_block_number = fetch_block_inclusion_data(burn_tx_block["number"])
     block_proof = build_block_proof(start, end, burn_tx_block["number"])
     path, receipt_proof = build_receipt_proof(burn_tx_receipt, burn_tx_block)
@@ -361,3 +361,20 @@ def build_calldata() -> bytes:
         log_index,
     )
     return calldata
+
+
+def exit():
+    print("Building Calldata")
+    calldata = build_calldata()
+
+    deployment_addrs = fetch_deployment_data()["Main"]["POSContracts"]
+    root_chain_mgr_proxy_addr, root_chain_mgr_addr = (
+        deployment_addrs["RootChainManagerProxy"],
+        deployment_addrs["RootChainManager"],
+    )
+    root_chain_mgr = Contract.from_explorer(
+        root_chain_mgr_proxy_addr, root_chain_mgr_addr, silent=True
+    )
+
+    print("Calling Exit Function on Root Chain Manager")
+    root_chain_mgr.exit(calldata, {"from": MSG_SENDER})
