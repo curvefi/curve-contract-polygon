@@ -4,6 +4,24 @@ Script for withdrawing an ERC20 asset from Matic Mainnet back to Ethereum.
 This is a two part script, the first portion requires you to burn an ERC20 asset
 on the Matic Network, and then after the burn is checkpointed on Ethereum mainnet,
 collect the ERC20 asset.
+
+Steps for successful withdrawl:
+
+1. Add Matic ERC20 variable data below
+   - MATIC_ERC20_ASSET_ADDR
+   - BURN_AMOUNT
+2. Call script as follows: `brownie run exit burn_asset_on_matic`
+   - Do this in fork mode first ofcourse
+3. Add the Burn TX ID below
+   - MATIC_BURN_TX_ID
+4. Wait a while up to 30 mins
+5. Call check inclusion function to see if the burn tx has been checkpointed.
+   `brownie run exit is_burn_checkpointed`
+6. Once the burn tx has been checkpointed call the exit function
+   `brownie run exit exit`
+   - Do this in fork mode first ofcourse
+
+To test run: brownie run exit tester --network mainnet
 """
 import math
 from functools import wraps
@@ -378,3 +396,43 @@ def exit():
 
     print("Calling Exit Function on Root Chain Manager")
     root_chain_mgr.exit(calldata, {"from": MSG_SENDER})
+
+
+def test_calldata(burn_tx: str, exit_tx: str):
+    print(f"Testing Burn TX: {burn_tx}")
+
+    deployment_addrs = fetch_deployment_data()["Main"]["POSContracts"]
+    root_chain_mgr_proxy_addr, root_chain_mgr_addr = (
+        deployment_addrs["RootChainManagerProxy"],
+        deployment_addrs["RootChainManager"],
+    )
+    root_chain_mgr = Contract.from_explorer(
+        root_chain_mgr_proxy_addr, root_chain_mgr_addr, silent=True
+    )
+
+    calldata = HexBytes(root_chain_mgr.exit.encode_input(build_calldata(burn_tx)))
+    input_data = HexBytes(web3.eth.get_transaction(exit_tx)["input"])
+
+    assert calldata == input_data
+    print("Test passed")
+
+
+def tester():
+    # (burn_tx, exit_tx)
+    test_txs = [
+        (
+            "0x4486e398e0f2ca4d00bec85edbb9aff94e7085fa2b5ef18319989d9d8e37152f",
+            "0x6fe5d2638e7bdbf598c215c6d20b6bf2cad58479460091c0f2330506c14762bf",
+        ),
+        (
+            "0xbcaafea9bed5c31dc2472a015afca6463a5de14730a3a6ab4501475c0594cfc4",
+            "0x1afcfe324fcfa0fbf54182524e74fc57ff8ddff58367529af519adbaccc13f7a",
+        ),
+        (
+            "0x7d17b4cfbab16739bf00cead6ffec306f7420ec5c91de4ac1d485b7de9efaf49",
+            "0xfed6fc9558d45b0672fe9ff23d341d028d99f71a318feabf925f0d1b67eea503",
+        ),
+    ]
+    for burn, exit in test_txs:
+        test_calldata(burn, exit)
+    print("All works as expected.")
