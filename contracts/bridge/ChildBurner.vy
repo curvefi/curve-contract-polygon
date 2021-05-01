@@ -10,8 +10,8 @@ future_owner: public(address)
 
 
 @external
-def __init__():
-    self.owner = msg.sender
+def __init__(_owner: address):
+    self.owner = _owner
 
 
 @external
