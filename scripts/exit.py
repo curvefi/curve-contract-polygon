@@ -413,6 +413,7 @@ def main():
 Choose an option:
 (1) Burn an asset on Matic
 (2) Withdraw an asset on Ethereum
+(3) Check burn tx checkpoint
 Choice: """
     )
     try:
@@ -437,6 +438,9 @@ Choice: """
             else MSG_SENDER
         )
         withdraw_asset_on_ethereum(burn_tx_hash, sender)
+    elif route == 3:
+        burn_tx_hash = input("Enter burn tx hash: ")
+        is_burn_checkpointed(burn_tx_hash)
 
 
 def test_calldata(burn_tx: str, exit_tx: str):
