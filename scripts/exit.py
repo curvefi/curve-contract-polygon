@@ -186,7 +186,7 @@ def is_burn_checkpointed(burn_tx_id: str = MATIC_BURN_TX_ID) -> bool:
     """Check a burn tx has been checkpointed on Ethereum mainnet."""
     _, _, burn_tx_block = fetch_burn_tx_data(burn_tx_id)
     root_chain_proxy_addr = ADDRS[network.show_active()]["RootChainProxy"]
-    abi = get_loaded_projects()[0].interface.IRootChain.abi
+    abi = get_loaded_projects()[0].interface.RootChain.abi
     root_chain = Contract.from_abi("RootChain", root_chain_proxy_addr, abi)
 
     is_checkpointed = root_chain.getLastChildBlock() >= burn_tx_block["number"]
@@ -205,7 +205,7 @@ def fetch_block_inclusion_data(child_block_number: int) -> dict:
     CHECKPOINT_ID_INTERVAL = 10000
 
     root_chain_proxy_addr = ADDRS[network.show_active()]["RootChainProxy"]
-    abi = get_loaded_projects()[0].interface.IRootChain.abi
+    abi = get_loaded_projects()[0].interface.RootChain.abi
     root_chain = Contract.from_abi("RootChain", root_chain_proxy_addr, abi)
 
     start = 1
