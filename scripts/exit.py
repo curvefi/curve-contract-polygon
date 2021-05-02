@@ -30,7 +30,6 @@ from typing import List, Tuple
 import rlp
 from brownie import Contract, accounts, chain, network, web3
 from brownie.project import get_loaded_projects
-from brownie.project import load as load_project
 from eth_utils import keccak
 from hexbytes import HexBytes
 from tqdm import tqdm, trange
@@ -60,8 +59,9 @@ def keccak256(value):
 
 def burn_asset_on_matic(asset=MATIC_ERC20_ASSET_ADDR, amount=BURN_AMOUNT, sender=MSG_SENDER):
     """Burn an ERC20 asset on Matic Network"""
-    ChildERC20 = load_project("maticnetwork/pos-portal@1.5.2").ChildERC20
-    asset = ChildERC20.at(asset)
+    abi = get_loaded_projects()[0].interface.ChildERC20.abi
+    asset = Contract.from_abi("ChildERC20", asset, abi)
+
     tx = asset.withdraw(amount, {"from": sender})
     print("Burn transaction has been sent.")
     print(f"Visit https://explorer-mainnet.maticvigil.com/tx/{tx.txid} for confirmation")
@@ -398,9 +398,9 @@ def withdraw_asset_on_ethereum(burn_tx_id: str = MATIC_BURN_TX_ID, sender=MSG_SE
     print("Building Calldata")
     calldata = build_calldata(burn_tx_id)
 
-    RootChainManager = load_project("maticnetwork/pos-portal@1.5.2").RootChainManager
     root_chain_mgr_proxy_addr = ADDRS[network.show_active()]["RootChainManagerProxy"]
-    root_chain_mgr = RootChainManager.at(root_chain_mgr_proxy_addr)
+    abi = get_loaded_projects()[0].interface.RootChainManager.abi
+    root_chain_mgr = Contract.from_abi("RootChainManager", root_chain_mgr_proxy_addr, abi)
 
     print("Calling Exit Function on Root Chain Manager")
     root_chain_mgr.exit(calldata, {"from": sender})
@@ -436,16 +436,15 @@ Choice: """
             if input("Do you want to load an account? [y/N] ") == "y"
             else MSG_SENDER
         )
-        print("Starting burn")
         withdraw_asset_on_ethereum(burn_tx_hash, sender)
 
 
 def test_calldata(burn_tx: str, exit_tx: str):
     print(f"Testing Burn TX: {burn_tx}")
 
-    RootChainManager = load_project("maticnetwork/pos-portal@1.5.2").RootChainManager
     root_chain_mgr_proxy_addr = ADDRS[network.show_active()]["RootChainManagerProxy"]
-    root_chain_mgr = RootChainManager.at(root_chain_mgr_proxy_addr)
+    abi = get_loaded_projects()[0].interface.RootChainManager.abi
+    root_chain_mgr = Contract.from_abi("RootChainManager", root_chain_mgr_proxy_addr, abi)
 
     calldata = HexBytes(root_chain_mgr.exit.encode_input(build_calldata(burn_tx)))
     input_data = HexBytes(web3.eth.get_transaction(exit_tx)["input"])
