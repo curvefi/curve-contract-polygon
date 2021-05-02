@@ -8,3 +8,4 @@ compiler:
 dependencies:
   - maticnetwork/pos-portal@1.5.2
   - OpenZeppelin/openzeppelin-contracts@3.1.0
+autofetch_sources: true

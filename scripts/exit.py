@@ -28,18 +28,21 @@ from functools import wraps
 from typing import List, Tuple
 
 import rlp
-from brownie import Contract, accounts, network, web3
+from brownie import Contract, accounts, chain, network, web3
+from brownie.project import get_loaded_projects
 from brownie.project import load as load_project
 from eth_utils import keccak
 from hexbytes import HexBytes
+from tqdm import tqdm, trange
 from trie import HexaryTrie
 from web3.types import BlockData, TxReceipt
 
-from scripts.fetch_deployment_data import main as fetch_deployment_data
+from scripts.fetch_deployment_data import PROXY_DEPLOYMENT_ADDRS as ADDRS
 
 PreparedLogs = List[Tuple[bytes, List[bytes], bytes]]
 PreparedReceipt = Tuple[bytes, int, bytes, PreparedLogs]
 
+ADDRS["mainnet-fork"] = ADDRS["mainnet"]
 
 # MUST SET VARIABLES BEFORE BURNING ON MATIC
 MSG_SENDER = accounts.add()
@@ -47,7 +50,7 @@ MATIC_ERC20_ASSET_ADDR = ""
 BURN_AMOUNT = 0
 
 # BURN TX HASH
-MATIC_BURN_TX_ID = "0x4486e398e0f2ca4d00bec85edbb9aff94e7085fa2b5ef18319989d9d8e37152f"
+MATIC_BURN_TX_ID = ""
 
 
 def keccak256(value):
@@ -55,16 +58,16 @@ def keccak256(value):
     return HexBytes(keccak(value))
 
 
-def burn_asset_on_matic():
+def burn_asset_on_matic(asset=MATIC_ERC20_ASSET_ADDR, amount=BURN_AMOUNT, sender=MSG_SENDER):
     """Burn an ERC20 asset on Matic Network"""
     ChildERC20 = load_project("maticnetwork/pos-portal@1.5.2").ChildERC20
-    asset = ChildERC20.at(MATIC_ERC20_ASSET_ADDR)
-    tx = asset.withdraw(BURN_AMOUNT, {"from": MSG_SENDER})
+    asset = ChildERC20.at(asset)
+    tx = asset.withdraw(amount, {"from": sender})
     print("Burn transaction has been sent.")
     print(f"Visit https://explorer-mainnet.maticvigil.com/tx/{tx.txid} for confirmation")
 
 
-def hot_swap_network(network_name):
+def hot_swap_network(environment_name):
     """Decorator for hot swapping the network connection.
 
     There is probably a nicer way to do this but I'm lazy and this works.
@@ -76,21 +79,33 @@ def hot_swap_network(network_name):
     uses POA ... that sounds about right I really don't know but it works :)
 
     Args:
-        network_name: A valid network found in `brownie networks list`
+        environment_name: A valid environment name found in `brownie networks list`
+            e.g. 'ethereum', 'polygon'
     """
 
     def inner(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            current_network = network.show_active()
-            if current_network != network_name:
-                network.disconnect()
-                network.connect(network_name)
-                result = func(*args, **kwargs)
-                network.disconnect()
-                network.connect(current_network)
-                return result
-            return func(*args, **kwargs)
+            initial_network_id = network.show_active()
+            is_mainnet = "main" in initial_network_id
+
+            if environment_name == "ethereum":
+                swap_network_id = "mainnet" if is_mainnet else "goerli"
+            elif environment_name == "polygon":
+                swap_network_id = "polygon-main" if is_mainnet else "polygon-testnet"
+
+            if initial_network_id == swap_network_id:
+                return func(*args, **kwargs)
+
+            network.disconnect()
+            network.connect(swap_network_id)
+
+            result = func(*args, **kwargs)
+
+            network.disconnect()
+            network.connect(initial_network_id)
+
+            return result
 
         return wrapper
 
@@ -144,7 +159,7 @@ class MerkleTree:
 
         proof = []
         sibling_index = None
-        for i in range(len(self.layers) - 1):
+        for i in trange(len(self.layers) - 1, desc="Building merkle proof"):
             if index % 2 == 0:
                 sibling_index = index + 1
             else:
@@ -156,33 +171,30 @@ class MerkleTree:
         return proof
 
 
-@hot_swap_network("polygon-main")
+@hot_swap_network("polygon")
 def fetch_burn_tx_data(burn_tx_id: str = MATIC_BURN_TX_ID):
     """Fetch burn tx data."""
     tx = web3.eth.get_transaction(burn_tx_id)
     tx_receipt = web3.eth.get_transaction_receipt(burn_tx_id)
-    tx_block = web3.eth.get_block(tx["blockNumber"])
+    tx_block = chain[tx["blockNumber"]]
 
     return tx, tx_receipt, tx_block
 
 
-@hot_swap_network("mainnet")
+@hot_swap_network("ethereum")
 def is_burn_checkpointed(burn_tx_id: str = MATIC_BURN_TX_ID) -> bool:
     """Check a burn tx has been checkpointed on Ethereum mainnet."""
     _, _, burn_tx_block = fetch_burn_tx_data(burn_tx_id)
-    deployment_addrs = fetch_deployment_data()["Main"]["Contracts"]
-    root_chain_proxy_addr, root_chain_addr = (
-        deployment_addrs["RootChainProxy"],
-        deployment_addrs["RootChain"],
-    )
-    root_chain = Contract.from_explorer(root_chain_proxy_addr, root_chain_addr, silent=True)
+    root_chain_proxy_addr = ADDRS[network.show_active()]["RootChainProxy"]
+    abi = get_loaded_projects()[0].interface.IRootChain.abi
+    root_chain = Contract.from_abi("RootChain", root_chain_proxy_addr, abi)
 
     is_checkpointed = root_chain.getLastChildBlock() >= burn_tx_block["number"]
     print(f"Has Burn TX been Checkpointed? {is_checkpointed}")
     return is_checkpointed
 
 
-@hot_swap_network("mainnet")
+@hot_swap_network("ethereum")
 def fetch_block_inclusion_data(child_block_number: int) -> dict:
     """Fetch burn tx checkpoint block inclusion data.
 
@@ -192,12 +204,9 @@ def fetch_block_inclusion_data(child_block_number: int) -> dict:
     """
     CHECKPOINT_ID_INTERVAL = 10000
 
-    deployment_addrs = fetch_deployment_data()["Main"]["Contracts"]
-    root_chain_proxy_addr, root_chain_addr = (
-        deployment_addrs["RootChainProxy"],
-        deployment_addrs["RootChain"],
-    )
-    root_chain = Contract.from_explorer(root_chain_proxy_addr, root_chain_addr, silent=True)
+    root_chain_proxy_addr = ADDRS[network.show_active()]["RootChainProxy"]
+    abi = get_loaded_projects()[0].interface.IRootChain.abi
+    root_chain = Contract.from_abi("RootChain", root_chain_proxy_addr, abi)
 
     start = 1
     end = root_chain.currentHeaderBlock() // CHECKPOINT_ID_INTERVAL
@@ -275,11 +284,15 @@ def serialize_block(block: dict) -> bytes:
     return keccak256(block_number + timestamp + txs_root + receipts_root)
 
 
-@hot_swap_network("polygon-main")
+@hot_swap_network("polygon")
 def build_block_proof(block_start: int, block_end: int, burn_tx_block_number: int) -> List[bytes]:
     """Build a merkle proof for the burn tx block."""
+
     checkpoint_blocks = (
-        web3.eth.get_block(block_number) for block_number in range(block_start, block_end + 1)
+        chain[block_number]
+        for block_number in trange(
+            block_start, block_end + 1, desc="Serializing blocks", unit="block"
+        )
     )
     serialized_blocks = list(map(serialize_block, checkpoint_blocks))
 
@@ -289,7 +302,7 @@ def build_block_proof(block_start: int, block_end: int, burn_tx_block_number: in
     return merkle_tree.get_proof(burn_tx_serialized_block)
 
 
-@hot_swap_network("polygon-main")
+@hot_swap_network("polygon")
 def build_receipt_proof(burn_tx_receipt: TxReceipt, burn_tx_block: BlockData) -> List[bytes]:
     """Build the burn_tx_receipt proof."""
     state_sync_tx_hash = keccak256(
@@ -298,7 +311,7 @@ def build_receipt_proof(burn_tx_receipt: TxReceipt, burn_tx_block: BlockData) ->
     receipts_trie = HexaryTrie({})
     receipts = (
         web3.eth.get_transaction_receipt(tx)
-        for tx in burn_tx_block["transactions"]
+        for tx in tqdm(burn_tx_block["transactions"], desc="Building receipts trie", unit="receipt")
         if tx != state_sync_tx_hash
     )
     for tx_receipt in receipts:
@@ -306,6 +319,7 @@ def build_receipt_proof(burn_tx_receipt: TxReceipt, burn_tx_block: BlockData) ->
         receipts_trie[path] = serialize_receipt(tx_receipt)
 
     key = rlp.encode(burn_tx_receipt["transactionIndex"])
+    print("Building merkle proof")
     proof = receipts_trie.get_proof(key)
 
     assert (
@@ -357,14 +371,13 @@ def encode_payload(
 
 def build_calldata(burn_tx_id: str = MATIC_BURN_TX_ID) -> bytes:
     """Generate the calldata required for withdrawing ERC20 asset on Ethereum."""
-    assert is_burn_checkpointed()
+    assert is_burn_checkpointed(burn_tx_id)
 
     burn_tx, burn_tx_receipt, burn_tx_block = fetch_burn_tx_data(burn_tx_id)
+    log_index = find_log_index(burn_tx_receipt)
     start, end, header_block_number = fetch_block_inclusion_data(burn_tx_block["number"])
     block_proof = build_block_proof(start, end, burn_tx_block["number"])
     path, receipt_proof = build_receipt_proof(burn_tx_receipt, burn_tx_block)
-
-    log_index = find_log_index(burn_tx_receipt)
 
     calldata = encode_payload(
         header_block_number,
@@ -381,34 +394,58 @@ def build_calldata(burn_tx_id: str = MATIC_BURN_TX_ID) -> bytes:
     return calldata
 
 
-def exit():
+def withdraw_asset_on_ethereum(burn_tx_id: str = MATIC_BURN_TX_ID, sender=MSG_SENDER):
     print("Building Calldata")
-    calldata = build_calldata()
+    calldata = build_calldata(burn_tx_id)
 
-    deployment_addrs = fetch_deployment_data()["Main"]["POSContracts"]
-    root_chain_mgr_proxy_addr, root_chain_mgr_addr = (
-        deployment_addrs["RootChainManagerProxy"],
-        deployment_addrs["RootChainManager"],
-    )
-    root_chain_mgr = Contract.from_explorer(
-        root_chain_mgr_proxy_addr, root_chain_mgr_addr, silent=True
-    )
+    RootChainManager = load_project("maticnetwork/pos-portal@1.5.2").RootChainManager
+    root_chain_mgr_proxy_addr = ADDRS[network.show_active()]["RootChainManagerProxy"]
+    root_chain_mgr = RootChainManager.at(root_chain_mgr_proxy_addr)
 
     print("Calling Exit Function on Root Chain Manager")
-    root_chain_mgr.exit(calldata, {"from": MSG_SENDER})
+    root_chain_mgr.exit(calldata, {"from": sender})
+
+
+def main():
+
+    route = input(
+        """
+Choose an option:
+(1) Burn an asset on Matic
+(2) Withdraw an asset on Ethereum
+Choice: """
+    )
+    try:
+        route = int(route)
+    except ValueError:
+        exit()
+
+    if route == 1:
+        asset = input("Input token to burn on matic: ")
+        amount = int(input("Input amount of token to burn: "))
+        sender = (
+            accounts.load(input("Account name: "))
+            if input("Do you want to load an account? [y/N] ") == "y"
+            else MSG_SENDER
+        )
+        burn_asset_on_matic(asset, amount, sender)
+    elif route == 2:
+        burn_tx_hash = input("Input matic burn tx hash: ")
+        sender = (
+            accounts.load(input("Account name: "))
+            if input("Do you want to load an account? [y/N] ") == "y"
+            else MSG_SENDER
+        )
+        print("Starting burn")
+        withdraw_asset_on_ethereum(burn_tx_hash, sender)
 
 
 def test_calldata(burn_tx: str, exit_tx: str):
     print(f"Testing Burn TX: {burn_tx}")
 
-    deployment_addrs = fetch_deployment_data()["Main"]["POSContracts"]
-    root_chain_mgr_proxy_addr, root_chain_mgr_addr = (
-        deployment_addrs["RootChainManagerProxy"],
-        deployment_addrs["RootChainManager"],
-    )
-    root_chain_mgr = Contract.from_explorer(
-        root_chain_mgr_proxy_addr, root_chain_mgr_addr, silent=True
-    )
+    RootChainManager = load_project("maticnetwork/pos-portal@1.5.2").RootChainManager
+    root_chain_mgr_proxy_addr = ADDRS[network.show_active()]["RootChainManagerProxy"]
+    root_chain_mgr = RootChainManager.at(root_chain_mgr_proxy_addr)
 
     calldata = HexBytes(root_chain_mgr.exit.encode_input(build_calldata(burn_tx)))
     input_data = HexBytes(web3.eth.get_transaction(exit_tx)["input"])
@@ -433,6 +470,6 @@ def tester():
             "0xfed6fc9558d45b0672fe9ff23d341d028d99f71a318feabf925f0d1b67eea503",
         ),
     ]
-    for burn, exit in test_txs:
-        test_calldata(burn, exit)
+    for burn_tx, exit_tx in test_txs:
+        test_calldata(burn_tx, exit_tx)
     print("All works as expected.")
