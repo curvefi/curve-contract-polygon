@@ -182,7 +182,7 @@ def fetch_burn_tx_data(burn_tx_id: str = MATIC_BURN_TX_ID):
 
 
 @hot_swap_network("ethereum")
-def is_burn_checkpointed(burn_tx_id: str = MATIC_BURN_TX_ID) -> bool:
+def is_burn_checkpointed(burn_tx_id: str = MATIC_BURN_TX_ID, silent: bool = False) -> bool:
     """Check a burn tx has been checkpointed on Ethereum mainnet."""
     _, _, burn_tx_block = fetch_burn_tx_data(burn_tx_id)
     root_chain_proxy_addr = ADDRS[network.show_active()]["RootChainProxy"]
@@ -190,7 +190,8 @@ def is_burn_checkpointed(burn_tx_id: str = MATIC_BURN_TX_ID) -> bool:
     root_chain = Contract.from_abi("RootChain", root_chain_proxy_addr, abi)
 
     is_checkpointed = root_chain.getLastChildBlock() >= burn_tx_block["number"]
-    print(f"Has Burn TX been Checkpointed? {is_checkpointed}")
+    if not silent:
+        print(f"Has Burn TX been Checkpointed? {is_checkpointed}")
     return is_checkpointed
 
 
@@ -440,7 +441,11 @@ Choice: """
         withdraw_asset_on_ethereum(burn_tx_hash, sender)
     elif route == 3:
         burn_tx_hash = input("Enter burn tx hash: ")
-        is_burn_checkpointed(burn_tx_hash)
+        bar_fmt = "Blocks Mined: {n} blocks - Time Elapsed: {elapsed}"
+        for block in tqdm(chain.new_blocks(1), bar_format=bar_fmt):
+            if is_burn_checkpointed(burn_tx_hash, True):
+                print(f"Tx {burn_tx_hash} has been checkpointed in block {block['number']}")
+                break
 
 
 def test_calldata(burn_tx: str, exit_tx: str):
