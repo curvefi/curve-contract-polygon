@@ -8,6 +8,19 @@ import requests
 DATA_URI = "https://static.matic.network/network/{network}/{version}/index.json"
 
 
+# Hard coded values for permanent proxy addresses
+PROXY_DEPLOYMENT_ADDRS = {
+    "mainnet": {
+        "RootChainProxy": "0x86E4Dc95c7FBdBf52e33D563BbDB00823894C287",
+        "RootChainManagerProxy": "0xA0c68C638235ee32657e8f720a23ceC1bFc77C77",
+    },
+    "goerli": {
+        "RootChainProxy": "0x2890bA17EfE978480615e330ecB65333b880928e",
+        "RootChainManagerProxy": "0xBbD7cBFA79faee899Eaf900F13C9065bF03B1A74",
+    },
+}
+
+
 def fetch_deployment_data(network: str, version: str, force_fetch: bool = True) -> dict:
     """Fetch matic deployment data with the side effect of writing to disk.
 
