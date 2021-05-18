@@ -406,6 +406,11 @@ def withdraw_asset_on_ethereum(burn_tx_id: str = MATIC_BURN_TX_ID, sender=MSG_SE
     print("Calling Exit Function on Root Chain Manager")
     root_chain_mgr.exit(calldata, {"from": sender})
 
+    # transfer USDC out of the root receiver
+    usdc = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+    root_receiver = Contract("0x4473243A61b5193670D1324872368d015081822f")
+    root_receiver.transfer(usdc, {"from": sender})
+
 
 def main():
 
