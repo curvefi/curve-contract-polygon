@@ -24,6 +24,7 @@ Steps for successful withdrawl:
 To test run: brownie run exit tester --network mainnet
 """
 import math
+from datetime import datetime
 from functools import wraps
 from typing import List, Tuple
 
@@ -398,6 +399,9 @@ def build_calldata(burn_tx_id: str = MATIC_BURN_TX_ID) -> bytes:
 def withdraw_asset_on_ethereum(burn_tx_id: str = MATIC_BURN_TX_ID, sender=MSG_SENDER):
     print("Building Calldata")
     calldata = build_calldata(burn_tx_id)
+    fp = f"withdraw-calldata-{datetime.now().isoformat()}.txt"
+    with open(fp, "w") as f:
+        f.write(calldata)
 
     root_chain_mgr_proxy_addr = ADDRS[network.show_active()]["RootChainManagerProxy"]
     abi = get_loaded_projects()[0].interface.RootChainManager.abi
