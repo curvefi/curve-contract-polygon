@@ -29,7 +29,7 @@ from functools import wraps
 from typing import List, Tuple
 
 import rlp
-from brownie import Contract, accounts, chain, network, web3
+from brownie import Contract, RootForwarder, accounts, chain, network, web3
 from brownie.project import get_loaded_projects
 from eth_utils import keccak
 from hexbytes import HexBytes
@@ -412,7 +412,7 @@ def withdraw_asset_on_ethereum(burn_tx_id: str = MATIC_BURN_TX_ID, sender=MSG_SE
 
     # transfer USDC out of the root receiver
     usdc = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
-    root_receiver = Contract("0x4473243A61b5193670D1324872368d015081822f")
+    root_receiver = RootForwarder.at("0x4473243A61b5193670D1324872368d015081822f")
     root_receiver.transfer(usdc, {"from": sender})
 
 
