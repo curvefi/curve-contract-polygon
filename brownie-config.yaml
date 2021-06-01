@@ -1,2 +1,4 @@
 networks:
   default: polygon-main-fork
+
+autofetch_sources: true
