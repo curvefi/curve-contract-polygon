@@ -401,7 +401,7 @@ def withdraw_asset_on_ethereum(burn_tx_id: str = MATIC_BURN_TX_ID, sender=MSG_SE
     calldata = build_calldata(burn_tx_id)
     fp = f"withdraw-calldata-{datetime.now().isoformat()}.txt"
     with open(fp, "w") as f:
-        f.write(calldata)
+        f.write(calldata.hex())
 
     root_chain_mgr_proxy_addr = ADDRS[network.show_active()]["RootChainManagerProxy"]
     abi = get_loaded_projects()[0].interface.RootChainManager.abi
