@@ -1,4 +1,4 @@
-from brownie import ABurner, ChildBurner, StableSwapAave, accounts, interface
+from brownie import ABurner, ChildBurner, StableSwapAave, accounts, history, interface
 
 
 def main():
@@ -7,12 +7,15 @@ def main():
 
     # withdraw admin fees to the burner
     swap = StableSwapAave.at("0x445FE580eF8d70FF569aB36e80c647af338db351")
-    admin.execute(swap, swap.withdraw_admin_fees.encode_input(), {"from": deployer})
+    admin.execute(
+        swap, swap.withdraw_admin_fees.encode_input(), {"from": deployer, "required_confs": 3}
+    )
 
     # burn - unwrap aTokens to underlying assets, swap for USDC and transfer to the bridge
     burner = ABurner.at("0xA237034249290De2B07988Ac64b96f22c0E76fE0")
     for i in range(3):
-        burner.burn(swap.coins(i), {"from": deployer})
+        burner.burn(swap.coins(i), {"from": deployer, "required_confs": 0})
+    history.wait()
 
     # send USDC over the bridge
     usdc = interface.BridgeToken("0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174")
