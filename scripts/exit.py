@@ -30,6 +30,7 @@ from typing import List, Tuple
 
 import rlp
 from brownie import Contract, RootForwarder, accounts, chain, network, web3
+from brownie.network.gas.strategies import GasNowScalingStrategy
 from brownie.project import get_loaded_projects
 from eth_utils import keccak
 from hexbytes import HexBytes
@@ -401,19 +402,19 @@ def withdraw_asset_on_ethereum(burn_tx_id: str = MATIC_BURN_TX_ID, sender=MSG_SE
     calldata = build_calldata(burn_tx_id)
     fp = f"withdraw-calldata-{datetime.now().isoformat()}.txt"
     with open(fp, "w") as f:
-        f.write(calldata)
+        f.write(calldata.hex())
 
     root_chain_mgr_proxy_addr = ADDRS[network.show_active()]["RootChainManagerProxy"]
     abi = get_loaded_projects()[0].interface.RootChainManager.abi
     root_chain_mgr = Contract.from_abi("RootChainManager", root_chain_mgr_proxy_addr, abi)
 
     print("Calling Exit Function on Root Chain Manager")
-    root_chain_mgr.exit(calldata, {"from": sender})
+    root_chain_mgr.exit(calldata, {"from": sender, "gas_price": GasNowScalingStrategy("fast")})
 
     # transfer USDC out of the root receiver
     usdc = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
     root_receiver = RootForwarder.at("0x4473243A61b5193670D1324872368d015081822f")
-    root_receiver.transfer(usdc, {"from": sender})
+    root_receiver.transfer(usdc, {"from": sender, "gas_price": GasNowScalingStrategy("fast")})
 
 
 def main():
