@@ -1,29 +1,33 @@
 {
-    "lp_contract": "CurveTokenV1",
-    "wrapped_contract": "renERC20",
-    "swap_address": "0x93054188d876f558f4a66B2EF1d97d16eDf0895B",
-    "lp_token_address": "0x49849C98ae39Fff122806C06791Fa73784FB3675",
-    "gauge_addresses": ["0xB1F2cdeC61db658F091671F5f199635aEF202CAC"],
+    "lp_contract": "CurveTokenV3",
+    "swap_address": "",
+    "lp_token_address": "",
+    "gauge_addresses": [
+        ""
+    ],
     "lp_constructor": {
-        "name": "Curve.fi renBTC/wBTC",
-        "symbol": "crvRenWBTC"
+        "name": "Curve.fi wBTC/oBTC",
+        "symbol": "crvwBTCoBTC"
+    },
+    "swap_constructor": {
+        "_A": 200,
+        "_fee": 4000000,
+        "_admin_fee": 5000000000
     },
     "coins": [
-        {
-            "name": "renBTC",
-            "tethered": false,
-            "wrapped_decimals": 8,
-            "underlying_address": "0xeb4c2781e4eba804ce9a9803c67d0893436bb27d",
-            "wrapped_address": "0xeb4c2781e4eba804ce9a9803c67d0893436bb27d"
-        },
         {
             "name": "wBTC",
             "decimals": 8,
             "tethered": false,
-            "underlying_address": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599"
+            "underlying_address": "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
+            "underlying_interface": "BridgeToken"
+        },
+        {
+            "name": "oBTC",
+            "tethered": false,
+            "decimals": 18,
+            "underlying_address": "0x90fB380DdEbAF872cc1F8d8e8C604Ff2f4697c19",
+            "underlying_interface": "BridgeToken"
         }
-    ],
-    "testing": {
-        "initial_amount": 1000
-    }
+    ]
 }
