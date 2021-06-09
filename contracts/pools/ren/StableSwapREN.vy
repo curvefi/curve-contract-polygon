@@ -483,15 +483,14 @@ def add_liquidity(_amounts: uint256[N_COINS], _min_mint_amount: uint256, _use_un
                     aave_referral,
                 )
             )
-        # renBTC
-        amount = _amounts[1]
-        if amount != 0:
-            assert ERC20(self.underlying_coins[1]).transferFrom(msg.sender, self, amount)
     else:
-        for i in range(N_COINS):
-            amount: uint256 = _amounts[i]
-            if amount != 0:
-                assert ERC20(self.coins[i]).transferFrom(msg.sender, self, amount) # dev: failed transfer
+        amount: uint256 = _amounts[0]
+        if amount != 0:
+            assert ERC20(self.coins[0]).transferFrom(msg.sender, self, amount) # dev: failed transfer
+    # renBTC
+    amount: uint256 = _amounts[1]
+    if amount != 0:
+        assert ERC20(self.underlying_coins[1]).transferFrom(msg.sender, self, amount)
 
     # Mint pool tokens
     CurveToken(lp_token).mint(msg.sender, mint_amount)
