@@ -19,7 +19,7 @@ live:
       chainid: 137
       id: polygon-main
       host: https://rpc-mainnet.maticvigil.com/
-      explorer: https://explorer.matic.network
+      explorer: https://api.polygonscan.com/api
     - name: Mumbai Testnet
       chainid: 80001
       id: polygon-testnet
