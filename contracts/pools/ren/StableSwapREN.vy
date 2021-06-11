@@ -117,7 +117,6 @@ admin_fee: public(uint256)  # admin_fee * 1e10
 owner: public(address)
 lp_token: public(address)
 
-aave_lending_pool: address
 aave_referral: uint256
 
 initial_A: public(uint256)
@@ -716,7 +715,7 @@ def remove_liquidity(
         assert value >= _min_amounts[i], "Withdrawal resulted in fewer coins than expected"
         amounts[i] = value
         if _use_underlying and i == 0:  # WBTC
-            LendingPool(AAVE_LENDING_POOL).withdraw(self.underlying_coins[i], value, msg.sender)
+            LendingPool(AAVE_LENDING_POOL).withdraw(self.underlying_coins[0], value, msg.sender)
         else:
             assert ERC20(self.coins[i]).transfer(msg.sender, value)
 
@@ -784,7 +783,7 @@ def remove_liquidity_imbalance(
         amount: uint256 = _amounts[i]
         if amount != 0:
             if _use_underlying and i == 0:
-                LendingPool(AAVE_LENDING_POOL).withdraw(self.underlying_coins[i], amount, msg.sender)
+                LendingPool(AAVE_LENDING_POOL).withdraw(self.underlying_coins[0], amount, msg.sender)
             else:
                 assert ERC20(self.coins[i]).transfer(msg.sender, amount)
 
@@ -916,7 +915,7 @@ def remove_liquidity_one_coin(
     CurveToken(self.lp_token).burnFrom(msg.sender, _token_amount)  # dev: insufficient funds
 
     if _use_underlying and i == 0:
-        LendingPool(AAVE_LENDING_POOL).withdraw(self.underlying_coins[i], dy, msg.sender)
+        LendingPool(AAVE_LENDING_POOL).withdraw(self.underlying_coins[0], dy, msg.sender)
     else:
         assert ERC20(self.coins[i]).transfer(msg.sender, dy)
 
