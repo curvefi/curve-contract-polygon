@@ -1,9 +1,9 @@
 {
     "lp_contract": "CurveTokenV3",
-    "swap_address": "",
-    "lp_token_address": "",
+    "swap_address": "0xC2d95EEF97Ec6C17551d45e77B590dc1F9117C67",
+    "lp_token_address": "0xf8a57c1d3b9629b77b6726a042ca48990A84Fb49",
     "gauge_addresses": [
-        ""
+        "0x93B14f53528a59E655d8Ce39bdba443DcDdddc4c"
     ],
     "lp_constructor": {
         "symbol": "crv amWBTC/renBTC",
