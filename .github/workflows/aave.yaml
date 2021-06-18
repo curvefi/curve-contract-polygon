@@ -19,11 +19,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    strategy:
-      fail-fast: false
-      matrix:
-        type: [unitary, integration]
-
     steps:
       - uses: actions/checkout@v2
 
@@ -50,6 +45,7 @@ jobs:
         run: |
           pip install wheel
           pip install -r requirements.txt
+          brownie networks import network-config.yaml True
 
       - name: Run Tests
-        run: brownie test tests/${{ matrix.type }} --network development --pool ${{ env.pool }}
+        run: brownie test tests/forked/ --network polygon-main-fork --pool aave
