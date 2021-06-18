@@ -62,5 +62,7 @@ class _MintableTestToken(Contract):
             token._mint_for_testing(target, amount)
             token.approve(lending_pool, amount, {"from": target})
             lending_pool.deposit(token, amount, target, 0, {"from": target})
+        elif hasattr(self, "mint"):
+            self.mint(target, amount, {"from": self.owner()})
         else:
             raise ValueError("Unsupported Token")

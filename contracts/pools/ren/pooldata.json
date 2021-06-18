@@ -1,0 +1,35 @@
+{
+    "lp_contract": "CurveTokenV3",
+    "swap_address": "0xC2d95EEF97Ec6C17551d45e77B590dc1F9117C67",
+    "lp_token_address": "0xf8a57c1d3b9629b77b6726a042ca48990A84Fb49",
+    "gauge_addresses": [
+        "0x93B14f53528a59E655d8Ce39bdba443DcDdddc4c"
+    ],
+    "lp_constructor": {
+        "symbol": "crv amWBTC/renBTC",
+        "name": "Curve.fi amWBTC/renBTC"
+    },
+    "swap_constructor": {
+        "_A": 200,
+        "_fee": 4000000,
+        "_admin_fee": 5000000000,
+        "_offpeg_fee_multiplier": 20000000000
+    },
+    "coins": [
+        {
+            "name": "amWBTC",
+            "decimals": 8,
+            "wrapped_decimals": 8,
+            "underlying_address": "0x1BFD67037B42Cf73acF2047067bd4F2C47D9BfD6",
+            "wrapped_address": "0x5c2ed810328349100A66B82b78a1791B101C9D61",
+            "underlying_interface": "BridgeToken",
+            "wrapped_interface": "AToken"
+        },
+        {
+            "name": "renBTC",
+            "decimals": 8,
+            "underlying_address": "0xDBf31dF14B66535aF65AaC99C32e9eA844e14501",
+            "underlying_interface": "renERC20"
+        }
+    ]
+}

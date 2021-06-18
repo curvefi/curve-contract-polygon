@@ -1,27 +1,23 @@
-name: bridge
+name: ren
 
 on:
   pull_request:
     paths:
       - "tests/**/*.py"
-      - "contracts/bridge/**.vy"
+      - "contracts/pools/ren/**.vy"
   push:
     paths:
       - "tests/**/*.py"
-      - "contracts/bridge/**.vy"
+      - "contracts/pools/ren/**.vy"
 
 env:
+  pool: "ren"
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   NODE_OPTIONS: --max_old_space_size=4096
 
 jobs:
   test:
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        type: [unitary, integration]
 
     steps:
       - uses: actions/checkout@v2
@@ -49,6 +45,7 @@ jobs:
         run: |
           pip install wheel
           pip install -r requirements.txt
+          brownie networks import network-config.yaml True
 
       - name: Run Tests
-        run: brownie test tests/${{ matrix.type }} --network development
+        run: brownie test tests/forked/ --network polygon-main-fork --pool ren
