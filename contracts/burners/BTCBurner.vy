@@ -43,7 +43,7 @@ ADDRESS_PROVIDER: constant(address) = 0x0000000022D53366457F9d5E68Ec105046FC4383
 AMWBTC: constant(address) = 0x5c2ed810328349100A66B82b78a1791B101C9D61
 USDC: constant(address) = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174
 
-ATRICRYPTO2: constant(address) = 0x92577943c7aC4accb35288aB2CC84D75feC330aF
+ATRICRYPTO3: constant(address) = 0x92215849c439E1f8612b6646060B4E3E5ef822cC
 AM3CRV: constant(address) = 0xE7a24EF0C5e95Ffb0f6684b813A78F2a3AD7D171
 
 SS_AAVE: constant(address) = 0x445FE580eF8d70FF569aB36e80c647af338db351
@@ -58,7 +58,7 @@ def __init__(_receiver: address, _owner: address):
     """
     self.receiver = _receiver
     self.owner = _owner
-    ERC20(AMWBTC).approve(ATRICRYPTO2, MAX_UINT256)
+    ERC20(AMWBTC).approve(ATRICRYPTO3, MAX_UINT256)
 
 
 @internal
@@ -104,7 +104,7 @@ def burn(_coin: address) -> bool:
         amount = ERC20(AMWBTC).balanceOf(self)
 
     # amWBTC -> am3CRV
-    CryptoSwap(ATRICRYPTO2).exchange(1, 0, amount, 0)
+    CryptoSwap(ATRICRYPTO3).exchange(1, 0, amount, 0)
 
     # am3CRV -> USDC
     amount = ERC20(AM3CRV).balanceOf(self)
