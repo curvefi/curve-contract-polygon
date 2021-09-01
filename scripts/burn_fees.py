@@ -32,7 +32,7 @@ def main():
             pass
 
     # burn renBTC fees
-    burner = Contract("0x08809366fA6B218D1917225D11C17e95044E6477")
+    burner = Contract("0x5109abc063164d49c148a7ae970f631febbda4fa")
     for i in range(2):
         try:
             burner.burn(
