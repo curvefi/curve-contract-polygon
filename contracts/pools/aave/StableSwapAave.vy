@@ -1,6 +1,6 @@
-# @version 0.2.12
+# @version 0.2.15
 """
-@title Curve aPool for use on Polygon
+@title Curve aPool for use on Avalanche
 @author Curve.Fi
 @license Copyright (c) Curve.Fi, 2020 - all rights reserved
 @notice Pool implementation with aToken-style lending
@@ -101,9 +101,9 @@ A_PRECISION: constant(uint256) = 100
 ADMIN_ACTIONS_DELAY: constant(uint256) = 3 * 86400
 MIN_RAMP_TIME: constant(uint256) = 86400
 
-MATIC_REWARDS: constant(address) = 0x357D51124f59836DeD84c8a1730D72B749d8BC23
-AAVE_LENDING_POOL: constant(address) = 0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf
-WMATIC: constant(address) = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270
+AVAX_REWARDS: constant(address) = 0x01D83Fe6A10D2f2B7AF17034343746188272cAc9
+AAVE_LENDING_POOL: constant(address) = 0x4F01AeD16D97E3aB5ab2B501154DC9bb0F1A5A2C
+WAVAX: constant(address) = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7
 
 coins: public(address[N_COINS])
 underlying_coins: public(address[N_COINS])
@@ -367,11 +367,11 @@ def calc_token_amount(_amounts: uint256[N_COINS], is_deposit: bool) -> uint256:
 
 @internal
 def _claim_rewards():
-    # push wMatic rewards into the reward receiver
+    # push wAvax rewards into the reward receiver
     reward_receiver: address = self.reward_receiver
     if reward_receiver != ZERO_ADDRESS:
         response: Bytes[32] = raw_call(
-            MATIC_REWARDS,
+            AVAX_REWARDS,
             concat(
                 method_id("claimRewards(address[],uint256,address)"),
                 convert(32 * 3, bytes32),
@@ -386,7 +386,7 @@ def _claim_rewards():
         )
         amount: uint256 = convert(response, uint256)
         if amount > 0:
-            assert ERC20(WMATIC).transfer(reward_receiver, amount)
+            assert ERC20(WAVAX).transfer(reward_receiver, amount)
 
 
 @external
