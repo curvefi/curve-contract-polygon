@@ -33,6 +33,9 @@ interface Curve:
     def set_reward_receiver(_receiver: address): nonpayable
     def set_admin_fee_receiver(_receiver: address): nonpayable
 
+interface DynamicFeePool:
+    def commit_new_fee(_new_fee: uint256, _new_admin_fee: uint256, _new_offpeg_fee_multiplier: uint256): nonpayable
+
 
 interface AddressProvider:
     def get_registry() -> address: view
@@ -352,6 +355,20 @@ def commit_new_fee(_pool: address, new_fee: uint256, new_admin_fee: uint256):
     """
     assert msg.sender == self.admin, "Access denied"
     Curve(_pool).commit_new_fee(new_fee, new_admin_fee)
+
+
+@external
+@nonreentrant('lock')
+def commit_new_dynamic_fee(_pool: address, _new_fee: uint256, _new_admin_fee: uint256, _new_offpeg_fee_multiplier: uint256):
+    """
+    @notice Commit new fees for `_pool` pool, fee: `new_fee`, admin fee: `new_admin_fee`, and offpeg fee multiplier: `_new_offpeg_fee_multiplier`.
+    @param _pool Pool address
+    @param _new_fee New fee
+    @param _new_admin_fee New admin fee
+    @param _new_offpeg_fee_multipler _new_offpeg_fee_multiplier
+    """
+    assert msg.sender == self.admin, "Access denied"
+    DynamicFeePool(_pool).commit_new_dynamic_fee(_new_fee, _new_admin_fee, _new_offpeg_fee_multiplier)
 
 
 @external
